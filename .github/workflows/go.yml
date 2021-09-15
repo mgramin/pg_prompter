@@ -24,9 +24,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          project_path: "./cmd/pg_prompter"
-          binary_name: "pg_prompter"
-          ldflags: "-s -w"
+#          project_path: "./cmd/pg_prompter"
+#          binary_name: "pg_prompter"
+#          ldflags: "-s -w"
 
 #      - name: Set up Go
 #        uses: actions/setup-go@v2
