@@ -24,6 +24,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
+          release_tag: test_tag
 #          project_path: "./cmd/pg_prompter"
 #          binary_name: "pg_prompter"
 #          ldflags: "-s -w"
