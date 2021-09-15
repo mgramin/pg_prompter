@@ -28,6 +28,7 @@ jobs:
 #          binary_name: "pg_prompter"
 #          ldflags: "-s -w"
 
+
 #      - name: Set up Go
 #        uses: actions/setup-go@v2
 #        with:
