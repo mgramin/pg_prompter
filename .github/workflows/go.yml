@@ -13,20 +13,20 @@ jobs:
 
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
-#        os: [ ubuntu-latest, windows-latest ]
+        goos: [linux]
+        goarch: [amd64]
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Generate build files
-        uses: thatisuday/go-cross-build@v1
+      - uses: wangyoucao577/go-release-action@v1.16
         with:
-          platforms: 'linux/amd64'
-          package: 'demo'
-          name: 'program'
-          compress: 'false'
-          dest: 'dist'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          project_path: "./cmd/tbb"
+          binary_name: "pg_prompter"
+          ldflags: "-s -w"
 
 #      - name: Set up Go
 #        uses: actions/setup-go@v2
