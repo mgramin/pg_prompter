@@ -27,6 +27,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          release_tag: draft
+          release_tag: v0.1.0
           overwrite: true
           md5sum: false
