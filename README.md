@@ -2,7 +2,7 @@
 
 Fast and simple CLI tools for PostgreSQL
 
-- show
+- describe
 - drop
 - vacuum
 - gather stat
@@ -12,6 +12,8 @@ Fast and simple CLI tools for PostgreSQL
 ## REPL mode
 ![pg_prompter demo](demo.gif)
 
+- Fuzzy finder
+
 ## CLI mode
 Coming soon...
 
@@ -19,3 +21,7 @@ Build from source:
 ```
 go install
 ```
+
+
+TODO
+- Create interface `ConnectParameters`

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/c-bata/go-prompt"
 	"github.com/c-bata/go-prompt/completer"
+	"pg_prompter/db"
 )
 
 func CheckError(err error) {
@@ -11,10 +13,9 @@ func CheckError(err error) {
 	}
 }
 
-func CustomOptions(prefix string) []prompt.Option {
+func CustomOptions() []prompt.Option {
 	options := []prompt.Option{
 		prompt.OptionTitle("pg-prompter: seek and destroy any DB object"),
-		prompt.OptionPrefix(prefix),
 		prompt.OptionInputTextColor(prompt.Yellow),
 		prompt.OptionSuggestionBGColor(prompt.Purple),
 		prompt.OptionDescriptionBGColor(prompt.Blue),
@@ -22,6 +23,11 @@ func CustomOptions(prefix string) []prompt.Option {
 		prompt.OptionSelectedDescriptionBGColor(prompt.Purple),
 		prompt.OptionSelectedSuggestionTextColor(prompt.Red),
 		prompt.OptionCompletionWordSeparator(completer.FilePathCompletionSeparator),
+		prompt.OptionLivePrefix(changeLivePrefix),
 	}
 	return options
+}
+
+func changeLivePrefix() (string, bool) {
+	return fmt.Sprintf("%s@%s:%d>", db.CurrentParams.Dbname, db.CurrentParams.Host, db.CurrentParams.Port), true
 }

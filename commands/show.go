@@ -1,9 +1,9 @@
 package commands
 
 import (
-	"database/sql"
 	_ "embed"
 	"fmt"
+	"github.com/c-bata/go-prompt"
 	"github.com/olekukonko/tablewriter"
 	"os"
 	"pg_prompter/db"
@@ -13,53 +13,85 @@ import (
 //go:embed table_columns.sql
 var tableColumns string
 
-type ShowCmd struct {
-	Force     bool `help:"Force removal."`
-	Recursive bool `help:"Recursively remove files."`
+//go:embed all_objects.sql
+var allObjects string
 
-	Paths string `arg name:"path" help:"Paths to remove."`
+const ShowCommandName string = "show"
+
+type ShowCmd struct {
+	Pattern []string `arg:"" name:"pattern" help:"Object name pattern"`
+}
+
+type ShowCmdSuggester struct {
+	suggestedObjects []prompt.Suggest
+	next             Suggester
+}
+
+func (c ShowCmdSuggester) GetSuggestions(document prompt.Document) []prompt.Suggest {
+	context, err := Parse(document.TextBeforeCursor())
+	if err != nil {
+	}
+	if context.Path[1].Command.Name == ShowCommandName {
+		return prompt.FilterFuzzy(c.suggestedObjects, document.GetWordBeforeCursor(), true)
+	} else if c.next != nil {
+		return c.next.GetSuggestions(document)
+	} else {
+		return []prompt.Suggest{}
+	}
+}
+
+func (c ShowCmdSuggester) Refresh() {
+}
+
+func NewShowCmdSuggester(next Suggester) ShowCmdSuggester {
+	var dbObjects []DbObject
+	gorm, err := db.OpenGorm()
+	CheckError(err)
+	gorm.Raw(allObjects).Scan(&dbObjects)
+
+	var s []prompt.Suggest
+	for _, object := range dbObjects {
+		s = append(s, prompt.Suggest{Text: object.Name, Description: object.Description})
+	}
+
+	return ShowCmdSuggester{s, next}
+}
+
+type TableDescription struct {
+	Position string `caption:"#"`
+	Column   string `caption:"Column"`
+	Type     string `caption:"Type"`
+	Length   string `caption:"Length"`
+	Nullable string `caption:"Nullable"`
 }
 
 func (r *ShowCmd) Run(ctx *Context) error {
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		db.CurrentParams.Host, db.CurrentParams.Port, db.CurrentParams.User, db.CurrentParams.Password, db.CurrentParams.Dbname)
+	gorm, err := db.OpenGorm()
 
-	db, err := sql.Open("postgres", psqlconn)
-	CheckError(err)
-
-	split := strings.Split(r.Paths, ".")
-	rows, err := db.Query(tableColumns, split[0], split[1])
-	CheckError(err)
-
-	defer rows.Close()
-
-	var data [][]string
-
-	i := 0
-	for rows.Next() {
-		a := []string{"", "", "", ""}
-
-		err := rows.Scan(&a[0], &a[1], &a[2], &a[3])
+	for _, p := range r.Pattern {
+		split := strings.Split(p, ".")
+		schemaName := split[0]
+		objectName := split[1]
 		CheckError(err)
-
-		data = append(data, a)
-
-		i++
+		var result []TableDescription
+		gorm.Raw(tableColumns, schemaName, objectName).Scan(&result)
+		ShowTable(result, schemaName, objectName)
 	}
-	CheckError(rows.Err())
-
-	ShowTable(data)
 
 	return nil
 }
 
-func ShowTable(data [][]string) {
+func ShowTable(data []TableDescription, schemaName string, objectName string) {
+	fmt.Printf("%s.%s:\n", schemaName, objectName)
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"#", "Column", "Type", "Nullable"})
+	table.SetAutoFormatHeaders(false)
+	table.SetBorder(false)
+	table.SetHeader([]string{"Column", "Type", "Collation", "Nullable", "Default"})
 	for _, v := range data {
-		table.Append(v)
+		table.Append([]string{v.Column, v.Type, "", v.Nullable, ""})
 	}
 	table.Render()
+	println()
 }
 
 func CheckError(err error) {
